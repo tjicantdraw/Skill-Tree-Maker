@@ -144,6 +144,36 @@
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
     <script src="/lib/vue.global.js"></script>
+    <script>
+  let currentPlayerId = null;
+
+  async function promptPlayerId() {
+    const saved = localStorage.getItem('skillTreePlayerId');
+    const id = saved || prompt('Enter your player name to load your skill tree:');
+    if (!id) return;
+    currentPlayerId = id.trim().toLowerCase();
+    localStorage.setItem('skillTreePlayerId', currentPlayerId);
+
+    const { data } = await supabase
+      .from('player_trees')
+      .select('tree_data')
+      .eq('player_id', currentPlayerId)
+      .single();
+
+    if (data) {
+      window._loadedTreeData = data.tree_data;
+    }
+  }
+
+  async function savePlayerTree(treeData) {
+    if (!currentPlayerId) return;
+    await supabase
+      .from('player_trees')
+      .upsert({ player_id: currentPlayerId, tree_data: treeData, updated_at: new Date() });
+  }
+
+  promptPlayerId();
+</script>
     <!-- <script src="/lib/vue.global.prod.min.js"></script> -->
     <style>
       body {
